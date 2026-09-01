@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ERP XPRO33 · Cadastros</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Cadastros">
+<meta name="theme-color" content="#0E3F3A">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --bg:#F3F1EC;
+    --panel:#FFFFFF;
+    --ink:#20241F;
+    --ink-soft:#5C6259;
+    --line:#E2DED4;
+    --teal:#155952;
+    --teal-dark:#0E3F3A;
+    --teal-tint:#E6EFEC;
+    --amber:#C67A2E;
+    --amber-tint:#FBF0E2;
+    --red:#B3402F;
+    --red-tint:#FBEAE6;
+    --radius:14px;
+    --shadow:0 1px 2px rgba(32,36,31,0.06), 0 6px 20px rgba(32,36,31,0.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+    min-height:100vh;
+    padding-bottom:84px;
+  }
+  h1,h2,h3,.display{
+    font-family:'Space Grotesk',system-ui,sans-serif;
+    letter-spacing:-0.01em;
+  }
+  .mono{font-family:'JetBrains Mono',monospace;}
+
+  header.topbar{
+    position:sticky; top:0; z-index:20;
+    background:var(--teal-dark);
+    color:#fff;
+    padding:14px 16px 12px;
+  }
+  .brand{display:flex; align-items:baseline; justify-content:space-between; gap:8px;}
+  .brand .plant{
+    font-family:'Space Grotesk'; font-weight:700; font-size:20px; letter-spacing:-0.02em;
+  }
+  .brand .plant span{color:#8FC8BE;}
+  .conn-dot{
+    width:8px; height:8px; border-radius:50%; background:#E0A93F;
+    display:inline-block; margin-right:6px; transition:background .3s;
+  }
+  .conn-dot.on{background:#5FBF8F;}
+  .conn-label{font-size:11px; color:#B9D3CE; display:flex; align-items:center;}
+  .module-label{font-size:12.5px; color:#B9D3CE; margin-top:2px;}
+
+  .searchbar{
+    margin-top:12px; display:flex; gap:8px;
+  }
+  .searchbar input{
+    flex:1; border:none; border-radius:10px; padding:11px 14px;
+    background:rgba(255,255,255,0.12); color:#fff; font-size:14.5px;
+    font-family:'Inter';
+  }
+  .searchbar input::placeholder{color:#AFC9C3;}
+  .searchbar input:focus{outline:2px solid #8FC8BE; background:rgba(255,255,255,0.18);}
+
+  nav.tabbar{
+    position:fixed; bottom:0; left:0; right:0; z-index:30;
+    background:#fff; border-top:1px solid var(--line);
+    display:flex;
+    box-shadow:0 -4px 16px rgba(0,0,0,0.06);
+  }
+  nav.tabbar button{
+    flex:1; border:none; background:none; padding:10px 4px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:3px;
+    color:var(--ink-soft); font-family:'Inter'; font-size:11.5px; font-weight:600;
+    cursor:pointer;
+  }
+  nav.tabbar button .ico{font-size:19px; line-height:1;}
+  nav.tabbar button.active{color:var(--teal);}
+  nav.tabbar button .dot{
+    width:5px; height:5px; border-radius:50%; background:transparent; margin-top:1px;
+  }
+  nav.tabbar button.active .dot{background:var(--teal);}
+
+  main{padding:14px 14px 20px;}
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin:2px 0 12px;
+  }
+  .count-pill{
+    font-size:12px; color:var(--ink-soft); background:var(--panel);
+    border:1px solid var(--line); padding:4px 10px; border-radius:20px;
+  }
+  .btn-add{
+    background:var(--teal); color:#fff; border:none; border-radius:10px;
+    padding:10px 16px; font-family:'Inter'; font-weight:600; font-size:13.5px;
+    display:flex; align-items:center; gap:6px; cursor:pointer;
+  }
+  .btn-add:active{background:var(--teal-dark);}
+
+  .filter-row{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-bottom:10px;}
+  .chip{
+    flex:none; border:1px solid var(--line); background:#fff; color:var(--ink-soft);
+    font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{background:var(--teal); border-color:var(--teal); color:#fff;}
+
+  .empty{
+    text-align:center; padding:50px 20px; color:var(--ink-soft);
+  }
+  .empty .ico{font-size:34px; margin-bottom:10px;}
+  .empty .cta{color:var(--teal); font-weight:600; margin-top:6px; cursor:pointer;}
+
+  .card{
+    background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 14px; margin-bottom:10px; border:1px solid var(--line);
+  }
+  .card-top{display:flex; justify-content:space-between; align-items:flex-start; gap:10px;}
+  .card-thumb{width:52px; height:52px; border-radius:10px; object-fit:cover; border:1px solid var(--line); flex:none;}
+  .card-code{
+    font-family:'JetBrains Mono'; font-size:11.5px; font-weight:600; color:var(--teal);
+    background:var(--teal-tint); padding:2px 7px; border-radius:6px; display:inline-block;
+  }
+  .card-title{font-weight:700; font-size:15.5px; margin:6px 0 2px;}
+  .card-sub{font-size:12.5px; color:var(--ink-soft);}
+  .badge{
+    font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:20px; white-space:nowrap;
+  }
+  .badge.ok{background:var(--teal-tint); color:var(--teal);}
+  .badge.warn{background:var(--amber-tint); color:var(--amber);}
+  .badge.danger{background:var(--red-tint); color:var(--red);}
+  .badge.neutral{background:var(--bg); color:var(--ink-soft); border:1px solid var(--line);}
+  .card-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:8px 14px; margin-top:10px;
+    font-size:12.5px;
+  }
+  .card-grid.three{grid-template-columns:1fr 1fr 1fr;}
+  .card-grid .lbl{color:var(--ink-soft); font-size:10.5px; text-transform:uppercase; letter-spacing:.04em;}
+  .card-grid .val{font-weight:600; margin-top:1px;}
+  .card-actions{display:flex; gap:8px; margin-top:12px;}
+  .card-actions button{
+    flex:1; border:1px solid var(--line); background:#fff; border-radius:9px;
+    padding:8px 0; font-size:12.5px; font-weight:600; color:var(--ink); cursor:pointer;
+  }
+  .card-actions button.danger{color:var(--red); border-color:#EAD1CB;}
+  .bom-tag{
+    display:inline-flex; align-items:center; gap:5px; margin-top:10px; font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .shared-tag{
+    display:inline-flex; align-items:center; gap:5px; font-size:10.5px; color:var(--teal);
+    background:var(--teal-tint); padding:3px 8px; border-radius:20px; margin-bottom:8px;
+  }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,25,20,0.45); z-index:50;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show{display:flex;}
+  .sheet{
+    background:#fff; width:100%; max-width:520px; border-radius:20px 20px 0 0;
+    max-height:92vh; overflow-y:auto; padding:6px 18px 18px;
+    animation:slideup .22s ease-out;
+  }
+  @keyframes slideup{from{transform:translateY(24px); opacity:0.5;} to{transform:translateY(0); opacity:1;}}
+  .sheet-handle{width:38px; height:4px; background:var(--line); border-radius:4px; margin:10px auto 6px;}
+  .sheet-head{display:flex; justify-content:space-between; align-items:center; margin:6px 0 14px;}
+  .sheet-head h2{font-size:18px; margin:0;}
+  .sheet-close{background:var(--bg); border:none; width:30px; height:30px; border-radius:50%; font-size:16px; cursor:pointer; color:var(--ink-soft);}
+
+  .field{margin-bottom:12px;}
+  .field label{
+    display:block; font-size:11.5px; font-weight:700; color:var(--ink-soft);
+    text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px;
+  }
+  .field input, .field select, .field textarea{
+    width:100%; border:1.5px solid var(--line); border-radius:10px; padding:11px 12px;
+    font-size:14.5px; font-family:'Inter'; background:#fcfbf9; color:var(--ink);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:none; border-color:var(--teal); background:#fff;
+  }
+  .field-row{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .field-row.three{grid-template-columns:1fr 1fr 1fr;}
+  .hint{font-size:11px; color:var(--ink-soft); margin-top:4px;}
+  .hint.err{color:var(--red); font-weight:600;}
+
+  .bom-box{
+    border:1.5px dashed var(--line); border-radius:12px; padding:12px; background:#FBFAF7;
+  }
+  .bom-item{
+    display:flex; gap:8px; align-items:center; background:#fff; border:1px solid var(--line);
+    border-radius:10px; padding:8px; margin-bottom:8px;
+  }
+  .bom-item select{flex:2;}
+  .bom-item input{flex:1; min-width:0;}
+  .bom-item .rm{
+    flex:none; width:30px; height:30px; border-radius:8px; border:none; background:var(--red-tint);
+    color:var(--red); font-size:15px; cursor:pointer;
+  }
+  .bom-add{
+    width:100%; border:1.5px dashed var(--teal); background:var(--teal-tint); color:var(--teal);
+    border-radius:10px; padding:9px; font-weight:700; font-size:13px; cursor:pointer; margin-top:2px;
+  }
+  .bom-empty{font-size:12px; color:var(--ink-soft); text-align:center; padding:8px 0;}
+
+  .sheet-actions{display:flex; gap:10px; margin-top:16px;}
+  .btn-cancel{
+    flex:1; padding:12px; border-radius:11px; border:1.5px solid var(--line); background:#fff;
+    font-weight:700; font-size:14px; color:var(--ink-soft); cursor:pointer;
+  }
+  .btn-save{
+    flex:2; padding:12px; border-radius:11px; border:none; background:var(--teal); color:#fff;
+    font-weight:700; font-size:14px; cursor:pointer;
+  }
+  .btn-save:active{background:var(--teal-dark);}
+
+  .toast{
+    position:fixed; left:50%; bottom:96px; transform:translateX(-50%) translateY(20px);
+    background:var(--teal-dark); color:#fff; padding:11px 18px; border-radius:30px;
+    font-size:13px; font-weight:600; z-index:80; opacity:0; transition:all .25s; pointer-events:none;
+    box-shadow:0 8px 24px rgba(0,0,0,0.2);
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  .config-banner{
+    background:var(--amber-tint); border:1px solid #EAD2AC; color:#7A4E17;
+    font-size:12px; padding:10px 12px; border-radius:10px; margin:0 0 12px; line-height:1.5;
+  }
+  .config-banner code{background:#fff; padding:1px 5px; border-radius:5px; font-size:11px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <div>
+      <div class="plant">XPRO<span>33</span> · Cadastros</div>
+      <div class="module-label" id="moduleLabel">Produtos acabados</div>
+    </div>
+    <div class="conn-label"><span class="conn-dot" id="connDot"></span><span id="connText">conectando…</span></div>
+  </div>
+  <div class="searchbar">
+    <input type="text" id="searchInput" placeholder="Buscar por código, nome ou lote…">
+  </div>
+</header>
+
+<main>
+  <div id="configBannerSlot"></div>
+
+  <div class="filter-row" id="filterRow"></div>
+
+  <div class="toolbar">
+    <span class="count-pill" id="countPill">0 itens</span>
+    <button class="btn-add" id="btnAdd">＋ Novo</button>
+  </div>
+
+  <div id="listWrap"></div>
+</main>
+
+<nav class="tabbar">
+  <button class="tab active" data-tab="produtos"><span class="ico">🧴</span>Produtos<span class="dot"></span></button>
+  <button class="tab" data-tab="materiasPrimas"><span class="ico">🧪</span>Matérias-Primas<span class="dot"></span></button>
+  <button class="tab" data-tab="embalagens"><span class="ico">📦</span>Embalagens<span class="dot"></span></button>
+</nav>
+
+<div class="overlay" id="overlay">
+  <div class="sheet" id="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head">
+      <h2 id="sheetTitle">Novo produto</h2>
+      <button class="sheet-close" id="sheetClose">✕</button>
+    </div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   ERP XPRO33 — Módulo de Cadastros
+   Produtos acabados · Matérias-primas · Materiais de embalagem (com BOM)
+
+   IMPORTANTE: a aba Embalagens NÃO tem uma coleção própria. Ela lê e grava
+   diretamente no nó "estoqueEmbalagens" do Firebase — o MESMO nó usado pelo
+   app "Estoque Embalagens" (embalagemxpro). Isso evita ter duas listas
+   diferentes de embalagens circulando: qualquer item criado ou editado aqui
+   aparece lá, e vice-versa.
+
+   Usa o SDK "compat" do Firebase (scripts normais, não ES modules) de
+   propósito: assim o arquivo funciona abrindo direto do celular (file://),
+   sem precisar hospedar em servidor.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   1) CONFIGURAÇÃO DO FIREBASE (mesmo projeto usado nos outros apps XPRO33)
+   ------------------------------------------------------------------------- */
+const firebaseConfig = {
+  apiKey: "AIzaSyBEQ0pAsCBdDbo2RwcQlmD3jx6HteKfNC4",
+  authDomain: "folha-de-ponto-xpro.firebaseapp.com",
+  databaseURL: "https://folha-de-ponto-xpro-default-rtdb.firebaseio.com",
+  projectId: "folha-de-ponto-xpro",
+  storageBucket: "folha-de-ponto-xpro.firebasestorage.app",
+  messagingSenderId: "988072192165",
+  appId: "1:988072192165:web:590e4f9ff775bb18a2454c"
+};
+
+let db = null;
+try {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch (e) {
+  console.error("Falha ao iniciar Firebase:", e);
+  document.getElementById('configBannerSlot').innerHTML =
+    '<div class="config-banner">⚠️ Não foi possível conectar ao Firebase. Verifique a conexão ou as credenciais no início do arquivo.</div>';
+}
+
+/* -------------------------------------------------------------------------
+   2) ESTADO DA APLICAÇÃO
+   ------------------------------------------------------------------------- */
+const STORAGE_KEYS = {
+  produtos: 'xpro33_estoqueProdutos_cache',
+  materiasPrimas: 'xpro33_estoqueMateriaPrima_cache',
+  embalagens: 'xpro33_estoqueEmbalagens_cache'
+};
+
+const UNIDADES_MP = ['kg','L','g','ml','un'];
+const LOCAIS = ['caxias','sjm','galpao'];
+const LOCAIS_LABEL = { caxias:'Caxias', sjm:'SJM', galpao:'Galpão' };
+const EMB_THRESHOLDS = { baixo:3000, critico:1000 };
+
+// Formulações confirmadas em conversa anterior (fecha-lote: água para os 3 primeiros, silicone no óleo).
+// Batelada: Shampoo/Máscara 500kg, Condicionador 1000kg (fórmula nova), Óleo 200L.
+// Fórmulas-base compartilhadas por TODOS os condicionadores e máscaras
+// (confirmado: só o corante muda de linha pra linha — o resto é idêntico).
+// Todas as fórmulas nesta lista foram escaladas para lote padrão de 1000kg/1000L
+// (mesma convenção usada na planilha de custos), mantendo a proporção original.
+const BASE_CONDICIONADOR = [
+  { mpName: 'Base creme', qty: 25 },
+  { mpName: 'Base líquida', qty: 7 },
+  { mpName: 'Essência', qty: 7 },
+  { mpName: 'Conservante', qty: 0.4 },
+  { mpName: 'Óleo mineral', qty: 2 },
+  { mpName: 'Água', qty: 958.6 }
+];
+// Original: 500kg (Base creme 25, Base líquida 7, Essência 4, Óleo mineral 1, Conservante 0,2, Água 462,8) — escalado x2
+const BASE_MASCARA = [
+  { mpName: 'Base creme', qty: 50 },
+  { mpName: 'Base líquida', qty: 14 },
+  { mpName: 'Essência', qty: 8 },
+  { mpName: 'Óleo mineral', qty: 2 },
+  { mpName: 'Conservante', qty: 0.4 },
+  { mpName: 'Água', qty: 925.6 }
+];
+
+// Correspondência por NOME EXATO do produto (evita ambiguidade entre "Koryanna" e
+// "Koryanna Laranja", por exemplo). Corante fica de fora aqui — quem usa, o próprio
+// usuário adiciona direto na BOM do produto depois de aplicar esta base.
+const FORMULA_SEED = [
+  // Original: 500kg (Lauril 45, Amida 15, Anfótero 10, Sal 10, Essência 4, Água 416) — escalado x2
+  { productName: 'Shampoo Karseell 1L Novo', batchQty: 1000, batchUnit: 'kg', formula: [
+      { mpName: 'Lauril', qty: 90 },
+      { mpName: 'Amida', qty: 30 },
+      { mpName: 'Anfótero', qty: 20 },
+      { mpName: 'Sal', qty: 20 },
+      { mpName: 'Essência', qty: 8 },
+      { mpName: 'Água', qty: 832 }
+  ]},
+  // Original: 200L (Essência 3, Corante 0,03, Silicone 196,97) — escalado x5
+  { productName: 'Óleo/Reparador 50ml', batchQty: 1000, batchUnit: 'L', formula: [
+      { mpName: 'Essência', qty: 15 },
+      { mpName: 'Corante', qty: 0.15 },
+      { mpName: 'Silicone', qty: 984.85 }
+  ]},
+
+  { productName: 'Condicionador Karseell 1L Novo',      batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+  { productName: 'Condicionador Karseell 1L (Antigo)',  batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+  { productName: 'Condicionador Karseell 500ml',        batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+  { productName: 'Condicionador Koryanna 1L',           batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+  { productName: 'Condicionador Koryanna Laranja 1L',   batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+  { productName: 'Condicionador Matizador 500ml',       batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+  { productName: 'Condicionador Linha Cachos',          batchQty: 1000, batchUnit: 'kg', formula: BASE_CONDICIONADOR },
+
+  { productName: 'Máscara Karseell 500g',           batchQty: 1000, batchUnit: 'kg', formula: BASE_MASCARA },
+  { productName: 'Máscara Koryanna Laranja 500g',   batchQty: 1000, batchUnit: 'kg', formula: BASE_MASCARA },
+  { productName: 'Máscara Matizadora Roxa 500g',    batchQty: 1000, batchUnit: 'kg', formula: BASE_MASCARA },
+  { productName: 'Máscara BNC Reconstrutora 500g',  batchQty: 1000, batchUnit: 'kg', formula: BASE_MASCARA },
+  { productName: 'Máscara Ouro 500g',               batchQty: 1000, batchUnit: 'kg', formula: BASE_MASCARA }
+];
+
+// Produtos acabados: estrutura compartilhada com o app Estoque Produtos (array + extras)
+let produtosState = { items:[], movimentacoes:[], log:[], snapshots:[], lastModified:null };
+
+// Matérias-primas: estrutura compartilhada com o app Estoque Matéria Prima (array + extras)
+let mpState = { items:[], history:[], log:[], snapshots:[], lastModified:null };
+
+// Embalagens: estrutura compartilhada com o app Estoque Embalagens (array + extras)
+let embState = { items:[], falta:[], lastDate:null, lastTime:null, history:[], log:[], snapshots:[], lastModified:null };
+
+let activeTab = 'produtos';
+let activeFilter = 'todos';
+let searchTerm = '';
+let editingProdutoIdx = null; // produtos: índice no array produtosState.items
+let editingMpIdx = null;  // matérias-primas: índice no array mpState.items
+let editingEmbIdx = null; // embalagens: índice no array embState.items
+let bomRows = [];
+let pendingFoto = null; // base64 da foto do produto/embalagem sendo editado no formulário
+
+const moduleLabels = {
+  produtos: 'Produtos acabados (compartilhado com Estoque Produtos)',
+  materiasPrimas: 'Matérias-primas (compartilhado com Estoque Matéria Prima)',
+  embalagens: 'Materiais de embalagem (compartilhado com Estoque Embalagens)'
+};
+
+/* -------------------------------------------------------------------------
+   3) PERSISTÊNCIA LOCAL (cache offline)
+   ------------------------------------------------------------------------- */
+function loadLocal(key) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    console.error('Erro ao ler cache local', key, e);
+    return null;
+  }
+}
+function saveLocal(key, data) {
+  try { localStorage.setItem(key, JSON.stringify(data)); }
+  catch (e) { console.error('Erro ao salvar cache local', key, e); }
+}
+
+/* -------------------------------------------------------------------------
+   4) SINCRONIZAÇÃO COM FIREBASE
+   ------------------------------------------------------------------------- */
+function setConn(on, label) {
+  document.getElementById('connDot').classList.toggle('on', on);
+  document.getElementById('connText').textContent = label;
+}
+
+function initSync() {
+  if (!db) {
+    const cachedP = loadLocal(STORAGE_KEYS.produtos);
+    const cachedM = loadLocal(STORAGE_KEYS.materiasPrimas);
+    const cachedE = loadLocal(STORAGE_KEYS.embalagens);
+    if (cachedP) produtosState = cachedP;
+    if (cachedM) mpState = cachedM;
+    if (cachedE) embState = cachedE;
+    render();
+    setConn(false, 'somente local');
+    return;
+  }
+
+  setConn(false, 'conectando…');
+
+  db.ref('.info/connected').on('value', function(snap){
+    setConn(!!snap.val(), snap.val() ? 'online' : 'offline (cache)');
+  });
+
+  // Mesmo nó usado pelo app Estoque Produtos
+  db.ref('estoqueProdutos').on('value', function(snap){
+    const data = snap.val();
+    produtosState = {
+      items:         Array.isArray(data && data.items)         ? data.items         : [],
+      movimentacoes: Array.isArray(data && data.movimentacoes) ? data.movimentacoes : [],
+      log:           Array.isArray(data && data.log)           ? data.log           : [],
+      snapshots:     Array.isArray(data && data.snapshots)     ? data.snapshots     : [],
+      lastModified:  (data && data.lastModified) || null
+    };
+    saveLocal(STORAGE_KEYS.produtos, produtosState);
+    if (migrateProdutoCodes()) {
+      saveProdutosState();
+    } else {
+      render();
+    }
+  }, function(err){
+    console.error('Erro de sincronização em produtos', err);
+    produtosState = loadLocal(STORAGE_KEYS.produtos) || produtosState;
+    render();
+    showToast('Sem conexão — mostrando produtos salvos no aparelho');
+  });
+
+  // Mesmo nó usado pelo app Estoque Matéria Prima
+  db.ref('estoqueMateriaPrima').on('value', function(snap){
+    const data = snap.val();
+    mpState = {
+      items:        Array.isArray(data && data.items)     ? data.items     : [],
+      history:      Array.isArray(data && data.history)   ? data.history   : [],
+      log:          Array.isArray(data && data.log)       ? data.log       : [],
+      snapshots:    Array.isArray(data && data.snapshots) ? data.snapshots : [],
+      lastModified: (data && data.lastModified) || null
+    };
+    saveLocal(STORAGE_KEYS.materiasPrimas, mpState);
+    if (migrateMpCodes()) {
+      saveMpState();
+    } else {
+      render();
+    }
+  }, function(err){
+    console.error('Erro de sincronização em matérias-primas', err);
+    mpState = loadLocal(STORAGE_KEYS.materiasPrimas) || mpState;
+    render();
+    showToast('Sem conexão — mostrando matérias-primas salvas no aparelho');
+  });
+
+  // Mesmo nó usado pelo app Estoque Embalagens
+  db.ref('estoqueEmbalagens').on('value', function(snap){
+    const data = snap.val();
+    embState = {
+      items:        Array.isArray(data && data.items)     ? data.items     : [],
+      falta:        Array.isArray(data && data.falta)     ? data.falta     : [],
+      lastDate:     (data && data.lastDate)  || null,
+      lastTime:     (data && data.lastTime)  || null,
+      history:      Array.isArray(data && data.history)   ? data.history   : [],
+      log:          Array.isArray(data && data.log)       ? data.log       : [],
+      snapshots:    Array.isArray(data && data.snapshots) ? data.snapshots : [],
+      lastModified: (data && data.lastModified) || null
+    };
+    saveLocal(STORAGE_KEYS.embalagens, embState);
+    if (migrateEmbCodes()) {
+      saveEmbState();
+    } else {
+      render();
+    }
+  }, function(err){
+    console.error('Erro de sincronização em embalagens', err);
+    embState = loadLocal(STORAGE_KEYS.embalagens) || embState;
+    render();
+    showToast('Sem conexão — mostrando embalagens salvas no aparelho');
+  });
+}
+
+function produtoTotal(item) {
+  return item.units || 0;
+}
+
+// Mesma regra de status usada no app Estoque Produtos.
+function produtoStatus(item) {
+  const u = item.units || 0;
+  const min = item.min || 100;
+  if (u <= 0) return 'critico';
+  if (u <= min) return 'critico';
+  if (u <= min * 2) return 'baixo';
+  return 'ok';
+}
+
+function produtoAddLog(action, name, before, after) {
+  if (!produtosState.log) produtosState.log = [];
+  produtosState.log.unshift({ action: action, name: name, before: before, after: after, unit: 'uni', at: new Date().toISOString() });
+  if (produtosState.log.length > 200) produtosState.log = produtosState.log.slice(0, 200);
+  produtosState.lastModified = new Date().toISOString();
+}
+
+// Códigos de 6 dígitos para produtos: começam em 500001, sequenciais
+// (faixa própria, sem colidir com embalagens 100001+ ou matérias-primas 200001+).
+function nextProdutoCodigo() {
+  let max = 500000;
+  produtosState.items.forEach(function(it){
+    const n = parseInt(it.codigo, 10);
+    if (!isNaN(n) && n > max) max = n;
+  });
+  return String(max + 1);
+}
+
+function migrateProdutoCodes() {
+  const used = new Set();
+  produtosState.items.forEach(function(it){ if (it.codigo) used.add(String(it.codigo)); });
+  const missing = produtosState.items.filter(function(it){ return !it.codigo; });
+  if (missing.length === 0) return false;
+  missing.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+  let n = 500001;
+  missing.forEach(function(it){
+    while (used.has(String(n))) n++;
+    it.codigo = String(n);
+    used.add(String(n));
+    n++;
+  });
+  return true;
+}
+
+function saveProdutosState() {
+  saveLocal(STORAGE_KEYS.produtos, produtosState);
+  if (db) {
+    db.ref('estoqueProdutos').set(produtosState).catch(function(e){
+      console.error('Erro ao salvar produtos no Firebase', e);
+      showToast('Salvo neste aparelho — falha ao sincronizar');
+    });
+  }
+  render();
+}
+
+/* -------------------------------------------------------------------------
+   APLICAÇÃO DAS FÓRMULAS (Shampoo/Condicionador/Máscara/Óleo)
+   Usa FORMULA_SEED para: achar o produto correspondente pelo nome, montar a
+   fórmula referenciando matérias-primas existentes (criando as que faltarem).
+   ------------------------------------------------------------------------- */
+function normalizeName(s) {
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function findProdutoByExactName(name) {
+  const target = normalizeName(name);
+  return produtosState.items.find(function(p){ return normalizeName(p.name) === target; });
+}
+
+function findMpByName(name) {
+  const target = normalizeName(name);
+  return mpState.items.find(function(m){ return normalizeName(m.name) === target; });
+}
+
+// Garante que a matéria-prima exista no mpState (cria se faltar). Retorna o item.
+function ensureMp(name) {
+  let mp = findMpByName(name);
+  if (!mp) {
+    mp = { codigo: nextMpCodigo(), name: name, unit: 'kg', min: 0, caxias: 0, sjm: 0, galpao: 0 };
+    mpState.items.push(mp);
+  }
+  return mp;
+}
+
+function applyFormulasSeed() {
+  if (!confirm('Aplicar as fórmulas-base a todos os condicionadores, máscaras, o shampoo Karseell e o óleo? Isso substitui a fórmula atual desses produtos, se já existir. O corante (quando houver) não é incluído — adicione direto na BOM depois.')) return;
+
+  const notFound = [];
+  const created = [];
+  let applied = 0;
+
+  FORMULA_SEED.forEach(function(spec){
+    const produto = findProdutoByExactName(spec.productName);
+    if (!produto) { notFound.push(spec.productName); return; }
+
+    const formula = spec.formula.map(function(f){
+      const beforeCount = mpState.items.length;
+      const mp = ensureMp(f.mpName);
+      if (mpState.items.length > beforeCount) created.push(mp.name);
+      return { mpNome: mp.name, quantidade: String(f.qty), unidade: mp.unit || 'kg' };
+    });
+
+    produto.formula = formula;
+    produto.quantidadePadrao = String(spec.batchQty);
+    produto.unidadeQuantidadePadrao = spec.batchUnit;
+    applied++;
+  });
+
+  saveMpState();
+  saveProdutosState();
+
+  let msg = '✅ Fórmulas aplicadas em ' + applied + ' produtos';
+  if (created.length) msg += ' · ' + created.length + ' matéria(s)-prima(s) nova(s)';
+  if (notFound.length) msg += ' · não encontrado: ' + notFound.join(', ');
+  showToast(msg);
+}
+
+function embTotal(item) {
+  return (item.caxias || 0) + (item.sjm || 0) + (item.galpao || 0) + (item._legacyTotal || 0);
+}
+
+// Códigos de 6 dígitos para embalagens: começam em 100001, sequenciais.
+function nextEmbCodigo() {
+  let max = 100000;
+  embState.items.forEach(function(it){
+    const n = parseInt(it.codigo, 10);
+    if (!isNaN(n) && n > max) max = n;
+  });
+  return String(max + 1);
+}
+
+// Roda a cada carga de dados: atribui código a qualquer item que ainda não tenha um
+// (ex: itens que já existiam no app Estoque Embalagens antes deste recurso existir).
+// Atribui em ordem alfabética para manter os códigos previsíveis. Retorna true se algo mudou.
+function migrateEmbCodes() {
+  const used = new Set();
+  embState.items.forEach(function(it){ if (it.codigo) used.add(String(it.codigo)); });
+  const missing = embState.items.filter(function(it){ return !it.codigo; });
+  if (missing.length === 0) return false;
+  missing.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+  let n = 100001;
+  missing.forEach(function(it){
+    while (used.has(String(n))) n++;
+    it.codigo = String(n);
+    used.add(String(n));
+    n++;
+  });
+  return true;
+}
+
+function embAddLog(action, name, before, after) {
+  if (!embState.log) embState.log = [];
+  embState.log.unshift({ action: action, name: name, before: before, after: after, unit: 'uni', at: new Date().toISOString() });
+  if (embState.log.length > 200) embState.log = embState.log.slice(0, 200);
+  embState.lastModified = new Date().toISOString();
+}
+
+function saveEmbState() {
+  saveLocal(STORAGE_KEYS.embalagens, embState);
+  if (db) {
+    db.ref('estoqueEmbalagens').set(embState).catch(function(e){
+      console.error('Erro ao salvar embalagens no Firebase', e);
+      showToast('Salvo neste aparelho — falha ao sincronizar');
+    });
+  }
+  render();
+}
+
+function mpTotal(item) {
+  return (item.caxias || 0) + (item.sjm || 0) + (item.galpao || 0);
+}
+
+// Códigos de 6 dígitos para matérias-primas: começam em 200001, sequenciais
+// (mesmo padrão das embalagens, que começam em 100001, para não colidir).
+function nextMpCodigo() {
+  let max = 200000;
+  mpState.items.forEach(function(it){
+    const n = parseInt(it.codigo, 10);
+    if (!isNaN(n) && n > max) max = n;
+  });
+  return String(max + 1);
+}
+
+// Roda a cada carga de dados: atribui código a qualquer matéria-prima que ainda não tenha um.
+// Atribui em ordem alfabética para manter os códigos previsíveis. Retorna true se algo mudou.
+function migrateMpCodes() {
+  const used = new Set();
+  mpState.items.forEach(function(it){ if (it.codigo) used.add(String(it.codigo)); });
+  const missing = mpState.items.filter(function(it){ return !it.codigo; });
+  if (missing.length === 0) return false;
+  missing.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+  let n = 200001;
+  missing.forEach(function(it){
+    while (used.has(String(n))) n++;
+    it.codigo = String(n);
+    used.add(String(n));
+    n++;
+  });
+  return true;
+}
+
+// Mesma regra de status usada no app Estoque Matéria Prima.
+function mpStatus(item) {
+  const t = mpTotal(item);
+  const m = item.min || 0;
+  if (t <= 0) return 'critico';
+  if (m > 0 && t <= m) return 'critico';
+  if (m > 0 && t <= m * 2) return 'baixo';
+  return 'ok';
+}
+
+function mpAddLog(action, name, before, after, unit) {
+  if (!mpState.log) mpState.log = [];
+  mpState.log.unshift({ action: action, name: name, before: before, after: after, unit: unit || 'kg', at: new Date().toISOString() });
+  if (mpState.log.length > 200) mpState.log = mpState.log.slice(0, 200);
+  mpState.lastModified = new Date().toISOString();
+}
+
+function saveMpState() {
+  saveLocal(STORAGE_KEYS.materiasPrimas, mpState);
+  if (db) {
+    db.ref('estoqueMateriaPrima').set(mpState).catch(function(e){
+      console.error('Erro ao salvar matérias-primas no Firebase', e);
+      showToast('Salvo neste aparelho — falha ao sincronizar');
+    });
+  }
+  render();
+}
+
+/* -------------------------------------------------------------------------
+   5) UTILITÁRIOS
+   ------------------------------------------------------------------------- */
+function slugId(codigo) {
+  return String(codigo).trim().toUpperCase().replace(/[^A-Z0-9_-]/g, '_');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const parts = iso.split('-');
+  if (parts.length !== 3) return iso;
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+function daysUntil(iso) {
+  if (!iso) return null;
+  const target = new Date(iso + 'T00:00:00');
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  return Math.round((target - today) / 86400000);
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(function(){ t.classList.remove('show'); }, 2400);
+}
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+  });
+}
+
+/* -------------------------------------------------------------------------
+   FOTO DE PRODUTO/EMBALAGEM
+   Comprime a imagem no navegador (redimensiona + JPEG) antes de guardar como
+   base64 dentro do próprio registro no Firebase — sem precisar de Storage.
+   ------------------------------------------------------------------------- */
+function compressImage(file, maxDim, quality) {
+  return new Promise(function(resolve, reject){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.width, h = img.height;
+        if (w > h) { if (w > maxDim) { h = Math.round(h * maxDim / w); w = maxDim; } }
+        else { if (h > maxDim) { w = Math.round(w * maxDim / h); h = maxDim; } }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = function(){ reject(new Error('Não foi possível ler a imagem')); };
+      img.src = e.target.result;
+    };
+    reader.onerror = function(){ reject(new Error('Não foi possível ler o arquivo')); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function fotoFieldHtml() {
+  return '' +
+  '<div class="field"><label>Foto (opcional)</label>' +
+    '<div id="fotoPreviewWrap" style="margin-bottom:8px;">' + fotoPreviewHtml() + '</div>' +
+    '<input type="file" id="f_foto" accept="image/*" capture="environment" style="width:100%; font-size:13px;">' +
+    '<div class="hint">A foto é redimensionada automaticamente ao salvar.</div>' +
+  '</div>';
+}
+
+function fotoPreviewHtml() {
+  if (!pendingFoto) return '<div class="hint">Nenhuma foto selecionada</div>';
+  return '<img src="' + pendingFoto + '" style="max-width:130px; max-height:130px; border-radius:10px; border:1px solid var(--line); display:block; margin-bottom:6px;">' +
+    '<button type="button" id="fotoRemove" style="color:var(--red); background:none; border:none; cursor:pointer; font-size:12px; font-weight:600; padding:0;">🗑️ Remover foto</button>';
+}
+
+function bindFotoField() {
+  const input = document.getElementById('f_foto');
+  if (input) {
+    input.addEventListener('change', function(){
+      const file = input.files && input.files[0];
+      if (!file) return;
+      compressImage(file, 400, 0.6).then(function(dataUrl){
+        pendingFoto = dataUrl;
+        document.getElementById('fotoPreviewWrap').innerHTML = fotoPreviewHtml();
+        bindFotoRemove();
+      }).catch(function(e){
+        console.error(e);
+        showToast('Não foi possível processar a foto');
+      });
+    });
+  }
+  bindFotoRemove();
+}
+
+function bindFotoRemove() {
+  const btn = document.getElementById('fotoRemove');
+  if (btn) {
+    btn.addEventListener('click', function(){
+      pendingFoto = null;
+      document.getElementById('fotoPreviewWrap').innerHTML = fotoPreviewHtml();
+      const input = document.getElementById('f_foto');
+      if (input) input.value = '';
+    });
+  }
+}
+
+function embStatus(total, min) {
+  if (min && min > 0) {
+    if (total <= 0 || total <= min) return 'critico';
+    if (total <= min * 2) return 'baixo';
+    return 'ok';
+  }
+  if (total <= 0 || total <= EMB_THRESHOLDS.critico) return 'critico';
+  if (total <= EMB_THRESHOLDS.baixo) return 'baixo';
+  return 'sem-minimo';
+}
+
+/* -------------------------------------------------------------------------
+   6) NAVEGAÇÃO
+   ------------------------------------------------------------------------- */
+document.querySelectorAll('nav.tabbar .tab').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    activeTab = btn.dataset.tab;
+    activeFilter = 'todos';
+    document.querySelectorAll('nav.tabbar .tab').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('moduleLabel').textContent = moduleLabels[activeTab];
+    document.getElementById('searchInput').value = '';
+    searchTerm = '';
+    render();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', function(e){
+  searchTerm = e.target.value.trim().toLowerCase();
+  render();
+});
+
+document.getElementById('btnAdd').addEventListener('click', function(){
+  openForm(null);
+});
+
+/* -------------------------------------------------------------------------
+   7) RENDERIZAÇÃO DA LISTA
+   ------------------------------------------------------------------------- */
+function render() {
+  renderConfigBanner();
+  renderFilters();
+  const items = getFilteredItems();
+  document.getElementById('countPill').textContent =
+    items.length + (items.length === 1 ? ' item' : ' itens');
+
+  const wrap = document.getElementById('listWrap');
+  if (items.length === 0) {
+    wrap.innerHTML =
+      '<div class="empty"><div class="ico">🗂️</div>' +
+      '<div>Nenhum registro encontrado</div>' +
+      '<div class="cta" id="emptyCta">＋ Cadastrar agora</div></div>';
+    const cta = document.getElementById('emptyCta');
+    if (cta) cta.addEventListener('click', function(){ openForm(null); });
+    return;
+  }
+
+  if (activeTab === 'produtos') {
+    wrap.innerHTML = items.map(renderProdutoCard).join('');
+  } else if (activeTab === 'materiasPrimas') {
+    wrap.innerHTML = items.map(renderMpCard).join('');
+  } else {
+    wrap.innerHTML = items.map(renderEmbCard).join('');
+  }
+
+  wrap.querySelectorAll('[data-edit]').forEach(function(el){
+    el.addEventListener('click', function(){ openForm(el.dataset.edit); });
+  });
+  wrap.querySelectorAll('[data-del]').forEach(function(el){
+    el.addEventListener('click', function(){ confirmDelete(el.dataset.del); });
+  });
+}
+
+function renderConfigBanner() {
+  let msg = '';
+  if (activeTab === 'produtos') {
+    msg = '<div class="config-banner">🔗 Esta lista é a mesma do app <strong>Estoque Produtos</strong>. Alterar ou excluir um item aqui também altera lá.' +
+      '<div style="margin-top:8px"><button id="btnApplyFormulas" style="background:var(--teal);color:#fff;border:none;padding:6px 12px;border-radius:16px;font-size:11.5px;font-weight:700;cursor:pointer">🧪 Aplicar fórmulas-base (12 produtos)</button></div>' +
+      '</div>';
+  } else if (activeTab === 'embalagens') {
+    msg = '<div class="config-banner">🔗 Esta lista é a mesma do app <strong>Estoque Embalagens</strong>. Alterar ou excluir um item aqui também altera lá.</div>';
+  } else if (activeTab === 'materiasPrimas') {
+    msg = '<div class="config-banner">🔗 Esta lista é a mesma do app <strong>Estoque Matéria Prima</strong>. Alterar ou excluir um item aqui também altera lá.</div>';
+  }
+  document.getElementById('configBannerSlot').innerHTML = msg;
+  const btn = document.getElementById('btnApplyFormulas');
+  if (btn) btn.addEventListener('click', applyFormulasSeed);
+}
+
+function renderFilters() {
+  const row = document.getElementById('filterRow');
+  const chips = ['todos', 'OK', 'Baixo', 'Crítico'];
+  row.innerHTML = chips.map(function(c){
+    const active = c === activeFilter ? ' active' : '';
+    return '<button class="chip' + active + '" data-chip="' + escapeHtml(c) + '">' + escapeHtml(c) + '</button>';
+  }).join('');
+  row.querySelectorAll('[data-chip]').forEach(function(el){
+    el.addEventListener('click', function(){
+      activeFilter = el.dataset.chip;
+      render();
+    });
+  });
+}
+
+function getFilteredItems() {
+  if (activeTab === 'embalagens') {
+    let items = embState.items.map(function(it, idx){
+      return Object.assign({ _idx: idx }, it);
+    });
+    if (activeFilter !== 'todos') {
+      const map = { 'OK':'ok', 'Baixo':'baixo', 'Crítico':'critico' };
+      items = items.filter(function(it){
+        const st = embStatus(embTotal(it), it.min || 0);
+        return st === map[activeFilter] || (map[activeFilter] === 'ok' && st === 'sem-minimo');
+      });
+    }
+    if (searchTerm) {
+      items = items.filter(function(it){
+        const haystack = ((it.name || '') + ' ' + (it.codigo || '') + ' ' + (it.cat || '')).toLowerCase();
+        return haystack.indexOf(searchTerm) !== -1;
+      });
+    }
+    items.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    return items;
+  }
+
+  if (activeTab === 'materiasPrimas') {
+    let items = mpState.items.map(function(it, idx){
+      return Object.assign({ _idx: idx }, it);
+    });
+    if (activeFilter !== 'todos') {
+      const map = { 'OK':'ok', 'Baixo':'baixo', 'Crítico':'critico' };
+      items = items.filter(function(it){ return mpStatus(it) === map[activeFilter]; });
+    }
+    if (searchTerm) {
+      items = items.filter(function(it){
+        const haystack = ((it.name || '') + ' ' + (it.codigo || '')).toLowerCase();
+        return haystack.indexOf(searchTerm) !== -1;
+      });
+    }
+    items.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+    return items;
+  }
+
+  // produtos: array compartilhado com o app Estoque Produtos
+  let items = produtosState.items.map(function(it, idx){
+    return Object.assign({ _idx: idx }, it);
+  });
+  if (activeFilter !== 'todos') {
+    const map = { 'OK':'ok', 'Baixo':'baixo', 'Crítico':'critico' };
+    items = items.filter(function(it){ return produtoStatus(it) === map[activeFilter]; });
+  }
+  if (searchTerm) {
+    items = items.filter(function(it){
+      const haystack = ((it.name || '') + ' ' + (it.codigo || '') + ' ' + (it.cat || '')).toLowerCase();
+      return haystack.indexOf(searchTerm) !== -1;
+    });
+  }
+  items.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+  return items;
+}
+
+function renderProdutoCard(p) {
+  const nItems = (p.formula && p.formula.length) || 0;
+  const total = produtoTotal(p);
+  const st = produtoStatus(p);
+  let badge = '<span class="badge ok">OK</span>';
+  if (st === 'baixo') badge = '<span class="badge warn">Baixo</span>';
+  else if (st === 'critico') badge = '<span class="badge danger">Crítico</span>';
+
+  return '' +
+  '<div class="card">' +
+    '<div class="card-top">' +
+      '<div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">' +
+        (p.foto ? '<img src="' + p.foto + '" class="card-thumb" alt="">' : '') +
+        '<div style="min-width:0;"><span class="card-code">' + escapeHtml(p.codigo || '—') + '</span>' +
+          '<div class="card-title">' + escapeHtml(p.name) + '</div>' +
+          '<div class="card-sub">' + escapeHtml(p.cat || 'sem família') + ' · Total: ' + Number(total).toLocaleString('pt-BR') + ' uni' + (p.min ? ' · mínimo ' + Number(p.min).toLocaleString('pt-BR') : '') + '</div></div>' +
+      '</div>' +
+      badge +
+    '</div>' +
+    '<div class="card-grid">' +
+      '<div><div class="lbl">Qtd. padrão</div><div class="val">' + escapeHtml(p.quantidadePadrao || '—') + ' ' + escapeHtml(p.unidadeQuantidadePadrao || '') + '</div></div>' +
+      '<div><div class="lbl">Rendimento esperado</div><div class="val">' + escapeHtml(p.rendimentoEsperado || '—') + '%</div></div>' +
+    '</div>' +
+    '<div class="bom-tag">🧾 Fórmula: ' + nItems + (nItems === 1 ? ' item' : ' itens') + '</div>' +
+    '<div class="card-actions">' +
+      '<button data-edit="' + p._idx + '">✏️ Editar</button>' +
+      '<button class="danger" data-del="' + p._idx + '">🗑️ Excluir</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderMpCard(m) {
+  const total = mpTotal(m);
+  const st = mpStatus(m);
+  let badge = '<span class="badge ok">OK</span>';
+  if (st === 'baixo') badge = '<span class="badge warn">Baixo</span>';
+  else if (st === 'critico') badge = '<span class="badge danger">Crítico</span>';
+
+  return '' +
+  '<div class="card">' +
+    '<div class="card-top">' +
+      '<div><span class="card-code">' + escapeHtml(m.codigo || '—') + '</span>' +
+        '<div class="card-title">' + escapeHtml(m.name) +
+        ' <span class="card-code" style="margin-left:4px">' + escapeHtml(m.unit || 'kg') + '</span></div>' +
+        '<div class="card-sub">Total: ' + Number(total).toLocaleString('pt-BR') + ' ' + escapeHtml(m.unit || 'kg') + (m.min ? ' · mínimo ' + Number(m.min).toLocaleString('pt-BR') : '') + '</div></div>' +
+      badge +
+    '</div>' +
+    '<div class="card-grid three">' +
+      '<div><div class="lbl">Caxias</div><div class="val">' + Number(m.caxias || 0).toLocaleString('pt-BR') + '</div></div>' +
+      '<div><div class="lbl">SJM</div><div class="val">' + Number(m.sjm || 0).toLocaleString('pt-BR') + '</div></div>' +
+      '<div><div class="lbl">Galpão</div><div class="val">' + Number(m.galpao || 0).toLocaleString('pt-BR') + '</div></div>' +
+    '</div>' +
+    '<div class="card-actions">' +
+      '<button data-edit="' + m._idx + '">✏️ Editar</button>' +
+      '<button class="danger" data-del="' + m._idx + '">🗑️ Excluir</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function renderEmbCard(e) {
+  const total = embTotal(e);
+  const st = embStatus(total, e.min || 0);
+  let badge = '<span class="badge neutral">Sem mínimo</span>';
+  if (st === 'ok') badge = '<span class="badge ok">OK</span>';
+  else if (st === 'baixo') badge = '<span class="badge warn">Baixo</span>';
+  else if (st === 'critico') badge = '<span class="badge danger">Crítico</span>';
+
+  return '' +
+  '<div class="card">' +
+    '<div class="card-top">' +
+      '<div style="display:flex;gap:10px;align-items:flex-start;min-width:0;">' +
+        (e.foto ? '<img src="' + e.foto + '" class="card-thumb" alt="">' : '') +
+        '<div style="min-width:0;"><span class="card-code">' + escapeHtml(e.codigo || '—') + '</span>' +
+          '<div class="card-title">' + escapeHtml(e.name) + '</div>' +
+          '<div class="card-sub">' + (e.cat ? escapeHtml(e.cat) + ' · ' : '') + 'Total: ' + total.toLocaleString('pt-BR') + ' uni' + (e.min ? ' · mínimo ' + Number(e.min).toLocaleString('pt-BR') : '') + '</div></div>' +
+      '</div>' +
+      badge +
+    '</div>' +
+    '<div class="card-grid three">' +
+      '<div><div class="lbl">Caxias</div><div class="val">' + (e.caxias || 0).toLocaleString('pt-BR') + '</div></div>' +
+      '<div><div class="lbl">SJM</div><div class="val">' + (e.sjm || 0).toLocaleString('pt-BR') + '</div></div>' +
+      '<div><div class="lbl">Galpão</div><div class="val">' + (e.galpao || 0).toLocaleString('pt-BR') + '</div></div>' +
+    '</div>' +
+    '<div class="card-actions">' +
+      '<button data-edit="' + e._idx + '">✏️ Editar</button>' +
+      '<button class="danger" data-del="' + e._idx + '">🗑️ Excluir</button>' +
+    '</div>' +
+  '</div>';
+}
+
+/* -------------------------------------------------------------------------
+   8) FORMULÁRIOS
+   ------------------------------------------------------------------------- */
+const overlay = document.getElementById('overlay');
+const sheetBody = document.getElementById('sheetBody');
+const sheetTitle = document.getElementById('sheetTitle');
+
+document.getElementById('sheetClose').addEventListener('click', closeForm);
+overlay.addEventListener('click', function(e){ if (e.target === overlay) closeForm(); });
+
+function closeForm() {
+  overlay.classList.remove('show');
+  editingProdutoIdx = null;
+  editingMpIdx = null;
+  editingEmbIdx = null;
+  bomRows = [];
+  pendingFoto = null;
+}
+
+function openForm(id) {
+  if (activeTab === 'embalagens') {
+    editingEmbIdx = (id === null || id === undefined) ? null : Number(id);
+    const isEdit = editingEmbIdx !== null;
+    const record = isEdit ? embState.items[editingEmbIdx] : {};
+    pendingFoto = (isEdit && record.foto) ? record.foto : null;
+    sheetTitle.textContent = isEdit ? 'Editar embalagem' : 'Nova embalagem';
+    sheetBody.innerHTML = embFormHtml(record, isEdit);
+    bindEmbForm(isEdit);
+    overlay.classList.add('show');
+    return;
+  }
+
+  if (activeTab === 'materiasPrimas') {
+    editingMpIdx = (id === null || id === undefined) ? null : Number(id);
+    const isEdit = editingMpIdx !== null;
+    const record = isEdit ? mpState.items[editingMpIdx] : {};
+    sheetTitle.textContent = isEdit ? 'Editar matéria-prima' : 'Nova matéria-prima';
+    sheetBody.innerHTML = mpFormHtml(record, isEdit);
+    bindMpForm(isEdit);
+    overlay.classList.add('show');
+    return;
+  }
+
+  editingProdutoIdx = (id === null || id === undefined) ? null : Number(id);
+  const isEdit = editingProdutoIdx !== null;
+  const record = isEdit ? produtosState.items[editingProdutoIdx] : {};
+  pendingFoto = (isEdit && record.foto) ? record.foto : null;
+
+  bomRows = (isEdit && record.formula) ? record.formula.slice() : [];
+  sheetTitle.textContent = isEdit ? 'Editar produto' : 'Novo produto acabado';
+  sheetBody.innerHTML = produtoFormHtml(record, isEdit);
+  bindProdutoForm(isEdit);
+
+  overlay.classList.add('show');
+}
+
+function confirmDelete(id) {
+  if (activeTab === 'embalagens') {
+    const idx = Number(id);
+    const item = embState.items[idx];
+    if (!item) return;
+    if (confirm('Excluir "' + item.name + '"? Esta ação também remove o item do app Estoque Embalagens.')) {
+      embAddLog('delete', item.name, embTotal(item), 0);
+      embState.items.splice(idx, 1);
+      saveEmbState();
+      showToast('Registro excluído');
+    }
+    return;
+  }
+  if (activeTab === 'materiasPrimas') {
+    const idx = Number(id);
+    const item = mpState.items[idx];
+    if (!item) return;
+    if (confirm('Excluir "' + item.name + '"? Esta ação também remove o item do app Estoque Matéria Prima.')) {
+      mpState.items.splice(idx, 1);
+      saveMpState();
+      showToast('Registro excluído');
+    }
+    return;
+  }
+  const idx = Number(id);
+  const item = produtosState.items[idx];
+  if (!item) return;
+  if (confirm('Excluir "' + item.name + '"? Esta ação também remove o item do app Estoque Produtos.')) {
+    produtoAddLog('delete', item.name, produtoTotal(item), 0);
+    produtosState.items.splice(idx, 1);
+    saveProdutosState();
+    showToast('Registro excluído');
+  }
+}
+
+/* --- Produto acabado -------------------------------------------------- */
+function produtoFormHtml(r, isEdit) {
+  const unitOptions = ['kg','L'].map(function(u){
+    return '<option value="' + u + '"' + (r.unidadeQuantidadePadrao === u ? ' selected' : '') + '>' + u + '</option>';
+  }).join('');
+  const codigoDisplay = isEdit ? (r.codigo || '—') : nextProdutoCodigo() + ' (gerado ao salvar)';
+
+  return '' +
+  '<div class="shared-tag">🔗 Compartilhado com Estoque Produtos</div>' +
+  '<div class="field"><label>Código</label>' +
+    '<input type="text" value="' + escapeHtml(codigoDisplay) + '" disabled>' +
+    '<div class="hint">Gerado automaticamente, sequencial a partir de 500001.</div>' +
+  '</div>' +
+  '<div class="field"><label>Nome</label>' +
+    '<input id="f_nome" type="text" value="' + escapeHtml(r.name || '') + '" placeholder="Ex: Shampoo Karseell 1L Novo"></div>' +
+  fotoFieldHtml() +
+  '<div class="field"><label>Família</label>' +
+    '<input id="f_cat" type="text" value="' + escapeHtml(r.cat || '') + '" placeholder="Ex: Karseell, Cachos, Progressiva..."></div>' +
+  '<div class="field-row">' +
+    '<div class="field"><label>Qtd. em estoque (uni)</label>' +
+      '<input id="f_units" type="number" min="0" step="1" value="' + escapeHtml(r.units ?? '') + '" placeholder="0"></div>' +
+    '<div class="field"><label>Mínimo (alerta)</label>' +
+      '<input id="f_min" type="number" min="0" step="1" value="' + escapeHtml(r.min ?? '100') + '" placeholder="100"></div>' +
+  '</div>' +
+  '<div class="field-row">' +
+    '<div class="field"><label>Qtd. padrão de fabricação</label>' +
+      '<input id="f_qtdPadrao" type="number" min="0" step="0.01" value="' + escapeHtml(r.quantidadePadrao || '') + '" placeholder="Ex: 500"></div>' +
+    '<div class="field"><label>Unidade</label><select id="f_unidadeQtd">' + unitOptions + '</select></div>' +
+  '</div>' +
+  '<div class="field"><label>Rendimento esperado (%)</label>' +
+    '<input id="f_rendimento" type="number" min="0" max="200" step="0.1" value="' + escapeHtml(r.rendimentoEsperado || '') + '" placeholder="Ex: 98.5"></div>' +
+  '<div class="field"><label>Fórmula / BOM (Bill of Materials)</label>' +
+    '<div class="bom-box" id="bomBox"></div>' +
+    '<button type="button" class="bom-add" id="bomAdd">＋ Adicionar matéria-prima</button>' +
+  '</div>' +
+  '<div class="sheet-actions">' +
+    '<button class="btn-cancel" id="f_cancel">Cancelar</button>' +
+    '<button class="btn-save" id="f_save">Salvar produto</button>' +
+  '</div>';
+}
+
+function renderBomBox() {
+  const box = document.getElementById('bomBox');
+  const mpList = mpState.items.slice().sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+
+  if (mpList.length === 0) {
+    box.innerHTML = '<div class="bom-empty">Cadastre matérias-primas antes de montar a fórmula.</div>';
+    return;
+  }
+  if (bomRows.length === 0) {
+    box.innerHTML = '<div class="bom-empty">Nenhum insumo adicionado ainda.</div>';
+    return;
+  }
+
+  box.innerHTML = bomRows.map(function(row, idx){
+    const options = mpList.map(function(mp){
+      const sel = mp.name === row.mpNome ? ' selected' : '';
+      return '<option value="' + escapeHtml(mp.name) + '"' + sel + '>' + escapeHtml(mp.name) + ' (' + escapeHtml(mp.unit || 'kg') + ')</option>';
+    }).join('');
+    return '' +
+    '<div class="bom-item">' +
+      '<select data-bom-mp="' + idx + '">' + options + '</select>' +
+      '<input type="number" min="0" step="0.001" data-bom-qtd="' + idx + '" value="' + escapeHtml(row.quantidade || '') + '" placeholder="Qtd">' +
+      '<button type="button" class="rm" data-bom-rm="' + idx + '">✕</button>' +
+    '</div>';
+  }).join('');
+
+  box.querySelectorAll('[data-bom-mp]').forEach(function(el){
+    el.addEventListener('change', function(){
+      const idx = Number(el.dataset.bomMp);
+      const mp = mpState.items.find(function(m){ return m.name === el.value; });
+      bomRows[idx].mpNome = el.value;
+      bomRows[idx].unidade = mp ? mp.unit : '';
+    });
+  });
+  box.querySelectorAll('[data-bom-qtd]').forEach(function(el){
+    el.addEventListener('input', function(){
+      const idx = Number(el.dataset.bomQtd);
+      bomRows[idx].quantidade = el.value;
+    });
+  });
+  box.querySelectorAll('[data-bom-rm]').forEach(function(el){
+    el.addEventListener('click', function(){
+      const idx = Number(el.dataset.bomRm);
+      bomRows.splice(idx, 1);
+      renderBomBox();
+    });
+  });
+}
+
+function bindProdutoForm(isEdit) {
+  renderBomBox();
+  bindFotoField();
+  document.getElementById('bomAdd').addEventListener('click', function(){
+    if (mpState.items.length === 0) { showToast('Cadastre uma matéria-prima primeiro'); return; }
+    bomRows.push({ mpNome: mpState.items[0].name, quantidade: '', unidade: mpState.items[0].unit || '' });
+    renderBomBox();
+  });
+  document.getElementById('f_cancel').addEventListener('click', closeForm);
+  document.getElementById('f_save').addEventListener('click', function(){ saveProduto(isEdit); });
+}
+
+function saveProduto(isEdit) {
+  const name = document.getElementById('f_nome').value.trim();
+  if (!name) { showToast('Digite o nome do produto'); return; }
+
+  const cat = document.getElementById('f_cat').value.trim();
+  const units = parseInt(document.getElementById('f_units').value) || 0;
+  const min = parseInt(document.getElementById('f_min').value) || 100;
+  const formula = bomRows.filter(function(r){ return r.mpNome && r.quantidade !== ''; });
+
+  const extra = {
+    quantidadePadrao: document.getElementById('f_qtdPadrao').value,
+    unidadeQuantidadePadrao: document.getElementById('f_unidadeQtd').value,
+    rendimentoEsperado: document.getElementById('f_rendimento').value,
+    formula: formula,
+    foto: pendingFoto
+  };
+
+  if (isEdit) {
+    const before = produtoTotal(produtosState.items[editingProdutoIdx]);
+    produtosState.items[editingProdutoIdx] = Object.assign({}, produtosState.items[editingProdutoIdx], {
+      name: name, cat: cat, units: units, min: min
+    }, extra);
+    if (before !== units) produtoAddLog('edit', name, before, units);
+    saveProdutosState();
+    closeForm();
+    showToast('Produto atualizado');
+  } else {
+    const dup = produtosState.items.some(function(it){ return (it.name || '').toLowerCase() === name.toLowerCase(); });
+    if (dup) { showToast('Já existe um produto com esse nome'); return; }
+    const codigo = nextProdutoCodigo();
+    produtosState.items.push(Object.assign({ codigo: codigo, name: name, cat: cat, units: units, min: min }, extra));
+    produtoAddLog('add', name, 0, units);
+    saveProdutosState();
+    closeForm();
+    showToast('Produto cadastrado');
+  }
+}
+
+/* --- Matéria-prima (compartilhada com Estoque Matéria Prima) ------------- */
+function mpFormHtml(r, isEdit) {
+  const unitOptions = UNIDADES_MP.map(function(u){
+    return '<option value="' + u + '"' + (r.unit === u ? ' selected' : '') + '>' + u + '</option>';
+  }).join('');
+  const codigoDisplay = isEdit ? (r.codigo || '—') : nextMpCodigo() + ' (gerado ao salvar)';
+
+  return '' +
+  '<div class="shared-tag">🔗 Compartilhado com Estoque Matéria Prima</div>' +
+  '<div class="field"><label>Código</label>' +
+    '<input type="text" value="' + escapeHtml(codigoDisplay) + '" disabled>' +
+    '<div class="hint">Gerado automaticamente, sequencial a partir de 200001.</div>' +
+  '</div>' +
+  '<div class="field-row">' +
+    '<div class="field"><label>Nome</label>' +
+      '<input id="f_name" type="text" value="' + escapeHtml(r.name || '') + '" placeholder="Ex: Lauril Éter Sulfato de Sódio"></div>' +
+    '<div class="field"><label>Unidade</label><select id="f_unit">' + unitOptions + '</select></div>' +
+  '</div>' +
+  '<div class="field"><label>Mínimo (alerta)</label>' +
+    '<input id="f_min" type="number" min="0" step="0.1" value="' + escapeHtml(r.min ?? '') + '" placeholder="0"></div>' +
+  '<div class="field-row three">' +
+    '<div class="field"><label>Caxias</label><input id="f_caxias" type="number" min="0" step="0.1" value="' + escapeHtml(r.caxias ?? '') + '"></div>' +
+    '<div class="field"><label>SJM</label><input id="f_sjm" type="number" min="0" step="0.1" value="' + escapeHtml(r.sjm ?? '') + '"></div>' +
+    '<div class="field"><label>Galpão</label><input id="f_galpao" type="number" min="0" step="0.1" value="' + escapeHtml(r.galpao ?? '') + '"></div>' +
+  '</div>' +
+  '<div class="sheet-actions">' +
+    '<button class="btn-cancel" id="f_cancel">Cancelar</button>' +
+    '<button class="btn-save" id="f_save">Salvar matéria-prima</button>' +
+  '</div>';
+}
+
+function bindMpForm(isEdit) {
+  document.getElementById('f_cancel').addEventListener('click', closeForm);
+  document.getElementById('f_save').addEventListener('click', function(){ saveMp(isEdit); });
+}
+
+function saveMp(isEdit) {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { showToast('Digite o nome da matéria-prima'); return; }
+
+  const unit = document.getElementById('f_unit').value;
+  const min = parseFloat(document.getElementById('f_min').value) || 0;
+  const caxias = parseFloat(document.getElementById('f_caxias').value) || 0;
+  const sjm = parseFloat(document.getElementById('f_sjm').value) || 0;
+  const galpao = parseFloat(document.getElementById('f_galpao').value) || 0;
+
+  if (isEdit) {
+    const before = mpTotal(mpState.items[editingMpIdx]);
+    const after = caxias + sjm + galpao;
+    mpState.items[editingMpIdx] = Object.assign({}, mpState.items[editingMpIdx], {
+      name: name, unit: unit, min: min, caxias: caxias, sjm: sjm, galpao: galpao
+    });
+    if (before !== after) mpAddLog('edit', name, before, after, unit);
+    saveMpState();
+    closeForm();
+    showToast('Matéria-prima atualizada');
+  } else {
+    const dup = mpState.items.some(function(it){ return (it.name || '').toLowerCase() === name.toLowerCase(); });
+    if (dup) { showToast('Já existe uma matéria-prima com esse nome'); return; }
+    const codigo = nextMpCodigo();
+    mpState.items.push({ codigo: codigo, name: name, unit: unit, min: min, caxias: caxias, sjm: sjm, galpao: galpao });
+    mpAddLog('add', name, 0, caxias + sjm + galpao, unit);
+    saveMpState();
+    closeForm();
+    showToast('Matéria-prima cadastrada');
+  }
+}
+
+/* --- Embalagem (compartilhada com Estoque Embalagens) -------------------- */
+function embFormHtml(r, isEdit) {
+  const codigoDisplay = isEdit ? (r.codigo || '—') : nextEmbCodigo() + ' (gerado ao salvar)';
+  return '' +
+  '<div class="shared-tag">🔗 Compartilhado com Estoque Embalagens</div>' +
+  '<div class="field"><label>Código</label>' +
+    '<input type="text" value="' + escapeHtml(codigoDisplay) + '" disabled>' +
+    '<div class="hint">Gerado automaticamente, sequencial a partir de 100001.</div>' +
+  '</div>' +
+  '<div class="field"><label>Nome da embalagem</label>' +
+    '<input id="f_name" type="text" value="' + escapeHtml(r.name || '') + '" placeholder="Ex: Frasco 300ml Shampoo Karsell"></div>' +
+  fotoFieldHtml() +
+  '<div class="field"><label>Família (linha de produto)</label>' +
+    '<input id="f_cat" type="text" value="' + escapeHtml(r.cat || '') + '" placeholder="Ex: Matizador, Anti-queda, Anti-envelhecimento...">' +
+    '<div class="hint">Não aparece no app Estoque Embalagens (ele ainda não mostra esse campo), só aqui no Cadastros.</div>' +
+  '</div>' +
+  '<div class="field"><label>Mínimo (alerta)</label>' +
+    '<input id="f_min" type="number" min="0" step="1" value="' + escapeHtml(r.min || '') + '" placeholder="0"></div>' +
+  '<div class="field-row three">' +
+    '<div class="field"><label>Caxias</label><input id="f_caxias" type="number" min="0" step="1" value="' + escapeHtml(r.caxias || '') + '"></div>' +
+    '<div class="field"><label>SJM</label><input id="f_sjm" type="number" min="0" step="1" value="' + escapeHtml(r.sjm || '') + '"></div>' +
+    '<div class="field"><label>Galpão</label><input id="f_galpao" type="number" min="0" step="1" value="' + escapeHtml(r.galpao || '') + '"></div>' +
+  '</div>' +
+  '<div class="sheet-actions">' +
+    '<button class="btn-cancel" id="f_cancel">Cancelar</button>' +
+    '<button class="btn-save" id="f_save">Salvar embalagem</button>' +
+  '</div>';
+}
+
+function bindEmbForm(isEdit) {
+  bindFotoField();
+  document.getElementById('f_cancel').addEventListener('click', closeForm);
+  document.getElementById('f_save').addEventListener('click', function(){ saveEmb(isEdit); });
+}
+
+function saveEmb(isEdit) {
+  const name = document.getElementById('f_name').value.trim();
+  if (!name) { showToast('Digite o nome da embalagem'); return; }
+
+  const cat = document.getElementById('f_cat').value.trim();
+  const min = parseInt(document.getElementById('f_min').value) || 0;
+  const caxias = parseInt(document.getElementById('f_caxias').value) || 0;
+  const sjm = parseInt(document.getElementById('f_sjm').value) || 0;
+  const galpao = parseInt(document.getElementById('f_galpao').value) || 0;
+
+  if (isEdit) {
+    const before = embTotal(embState.items[editingEmbIdx]);
+    const prev = embState.items[editingEmbIdx];
+    const after = caxias + sjm + galpao;
+    embState.items[editingEmbIdx] = Object.assign({}, prev, {
+      name: name, cat: cat, min: min, caxias: caxias, sjm: sjm, galpao: galpao, foto: pendingFoto
+    });
+    if (before !== after) embAddLog('edit', name, before, after);
+    saveEmbState();
+    closeForm();
+    showToast('Embalagem atualizada');
+  } else {
+    const dup = embState.items.some(function(it){ return (it.name || '').toLowerCase() === name.toLowerCase(); });
+    if (dup) { showToast('Já existe uma embalagem com esse nome'); return; }
+    const codigo = nextEmbCodigo();
+    embState.items.push({ codigo: codigo, name: name, cat: cat, min: min, caxias: caxias, sjm: sjm, galpao: galpao, pct: 0, _legacyTotal: 0, foto: pendingFoto });
+    embAddLog('add', name, 0, caxias + sjm + galpao);
+    saveEmbState();
+    closeForm();
+    showToast('Embalagem cadastrada');
+  }
+}
+
+/* -------------------------------------------------------------------------
+   9) INICIALIZAÇÃO
+   ------------------------------------------------------------------------- */
+initSync();
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
